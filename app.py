@@ -35,7 +35,7 @@ def homepage():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             body {
-                background: #ffcc80; /* light orange */
+                background: #cce7ff; /* light blue */
                 font-family: 'Helvetica Neue', sans-serif;
                 padding: 40px;
                 text-align: center;
@@ -107,7 +107,7 @@ def show_museum(museum):
         <style>
             body {
                 font-family: 'Helvetica Neue', sans-serif;
-                background: #ffcc80; /* light orange */
+                background: #cce7ff; /* light blue */
                 padding: 20px;
             }
             a.back-link {
@@ -230,7 +230,7 @@ def admin():
         <style>
             body {
                 font-family: 'Helvetica Neue', sans-serif;
-                background: #ffcc80; /* light orange */
+                background: #cce7ff; /* light blue */
                 padding: 20px;
             }
             form {
