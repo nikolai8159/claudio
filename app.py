@@ -67,7 +67,7 @@ def homepage():
         </style>
     </head>
     <body>
-        <h1>Claudio's Museum App 🚀</h1>
+        <h1>Choose your museum or art gallery</h1>
         <div class="museums">
             <a class="museum-tile" href="/museum/louvre">Louvre</a>
             <a class="museum-tile" href="/museum/moma">MoMA</a>
