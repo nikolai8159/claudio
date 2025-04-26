@@ -2,7 +2,7 @@ from flask import Flask, render_template_string, request, redirect, session
 import psycopg2
 
 app = Flask(__name__)
-app.secret_key = 'your_super_secret_key_here'  # very important for session security
+app.secret_key = 'your_super_secret_key_here'  # Very important for session security
 
 # Database connection
 conn = psycopg2.connect(
@@ -31,18 +31,18 @@ def homepage():
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Choose a Museum or Gallery or Festival</title>
+        <title>Claudio's Museum App 🚀</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             body {
-                background: #e0f7fa;
+                background: #ffcc80; /* light orange */
                 font-family: 'Helvetica Neue', sans-serif;
                 padding: 40px;
                 text-align: center;
             }
             h1 {
                 margin-bottom: 40px;
-                color: #00796b;
+                color: #e65100;
             }
             .museums {
                 display: grid;
@@ -60,14 +60,14 @@ def homepage():
                 transition: 0.3s;
             }
             .museum-tile:hover {
-                background: #4caf50;
+                background: #fb8c00;
                 color: white;
                 transform: translateY(-5px);
             }
         </style>
     </head>
     <body>
-        <h1>Choose a Museum</h1>
+        <h1>Claudio's Museum App 🚀</h1>
         <div class="museums">
             <a class="museum-tile" href="/museum/louvre">Louvre</a>
             <a class="museum-tile" href="/museum/moma">MoMA</a>
@@ -107,14 +107,14 @@ def show_museum(museum):
         <style>
             body {
                 font-family: 'Helvetica Neue', sans-serif;
-                background: #e0f7fa;
+                background: #ffcc80; /* light orange */
                 padding: 20px;
             }
             a.back-link {
                 display: inline-block;
                 margin-bottom: 20px;
                 text-decoration: none;
-                background: #4caf50;
+                background: #fb8c00;
                 color: white;
                 padding: 10px 20px;
                 border-radius: 8px;
@@ -133,12 +133,12 @@ def show_museum(museum):
                 border-bottom: 1px solid #ccc;
             }
             th {
-                background: #4caf50;
+                background: #fb8c00;
                 color: white;
                 font-size: 18px;
             }
             tr:hover {
-                background: #f1f1f1;
+                background: #ffe0b2;
             }
         </style>
     </head>
@@ -230,7 +230,7 @@ def admin():
         <style>
             body {
                 font-family: 'Helvetica Neue', sans-serif;
-                background: #e0f7fa;
+                background: #ffcc80; /* light orange */
                 padding: 20px;
             }
             form {
@@ -250,7 +250,7 @@ def admin():
                 font-size: 16px;
             }
             button {
-                background: #4caf50;
+                background: #fb8c00;
                 color: white;
                 padding: 12px;
                 width: 100%;
@@ -260,7 +260,7 @@ def admin():
                 cursor: pointer;
             }
             button:hover {
-                background: #388e3c;
+                background: #ef6c00;
             }
         </style>
     </head>
@@ -307,7 +307,7 @@ def login():
         <style>
             body {
                 font-family: 'Helvetica Neue', sans-serif;
-                background: #e0f7fa;
+                background: #ffcc80;
                 padding: 20px;
             }
             form {
@@ -327,7 +327,7 @@ def login():
                 font-size: 16px;
             }
             button {
-                background: #4caf50;
+                background: #fb8c00;
                 color: white;
                 padding: 12px;
                 width: 100%;
@@ -337,7 +337,7 @@ def login():
                 cursor: pointer;
             }
             button:hover {
-                background: #388e3c;
+                background: #ef6c00;
             }
         </style>
     </head>
