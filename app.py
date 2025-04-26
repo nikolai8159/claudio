@@ -31,7 +31,7 @@ def homepage():
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Claudio's Museum App 🚀</title>
+        <title>Choose your Museum or Art Gallery</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             body {
