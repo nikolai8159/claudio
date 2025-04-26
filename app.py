@@ -31,7 +31,7 @@ def homepage():
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Choose your Museum or Art Gallery</title>
+        <title>Wähle dein Museum aus</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             body {
