@@ -67,7 +67,7 @@ def homepage():
         </style>
     </head>
     <body>
-        <h1>Choose your museum of choice</h1>
+        <h1>Choose your museum of choice now</h1>
         <div class="museums">
             <a class="museum-tile" href="/museum/louvre">Louvre</a>
             <a class="museum-tile" href="/museum/moma">MoMA</a>
