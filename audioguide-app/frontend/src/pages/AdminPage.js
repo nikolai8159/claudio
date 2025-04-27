@@ -6,7 +6,10 @@ function AdminPage() {
   const [newMuseumLocation, setNewMuseumLocation] = useState('');
   const [newMuseumDescription, setNewMuseumDescription] = useState('');
   const [selectedMuseum, setSelectedMuseum] = useState(null);
+  const [selectedMuseumName, setSelectedMuseumName] = useState('');
   const [artworks, setArtworks] = useState([]);
+  const [filteredArtworks, setFilteredArtworks] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [newArtwork, setNewArtwork] = useState({
     title: '',
     artist: '',
@@ -21,6 +24,10 @@ function AdminPage() {
     fetchMuseums();
   }, []);
 
+  useEffect(() => {
+    handleSearch();
+  }, [searchTerm, artworks]);
+
   const fetchMuseums = () => {
     fetch('http://192.168.178.61:5000/api/museums')
       .then(response => response.json())
@@ -28,12 +35,10 @@ function AdminPage() {
       .catch(error => console.error('Error fetching museums:', error));
   };
 
-  const handleAddMuseum = () => {
-    // You can later add museum POST endpoint; currently skipping
-  };
-
   const handleSelectMuseum = (museumId) => {
     setSelectedMuseum(museumId);
+    const museum = museums.find(m => m.id === museumId);
+    setSelectedMuseumName(museum ? museum.name : '');
     fetch(`http://192.168.178.61:5000/api/museums/${museumId}/artworks`)
       .then(response => response.json())
       .then(data => setArtworks(data))
@@ -71,6 +76,29 @@ function AdminPage() {
     }
   };
 
+  const handleSearch = () => {
+    const lowerSearch = searchTerm.toLowerCase();
+    const filtered = artworks.filter(art =>
+      art.title.toLowerCase().includes(lowerSearch) ||
+      art.artist.toLowerCase().includes(lowerSearch)
+    );
+    setFilteredArtworks(filtered);
+  };
+
+  const handleDownload = () => {
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `${date}_artworks_${selectedMuseumName.toLowerCase().replace(/\s+/g, '-')}.json`;
+    const fileData = JSON.stringify(artworks, null, 2);
+    const blob = new Blob([fileData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div style={{ padding: '20px' }}>
       <h1>Admin Console</h1>
@@ -92,51 +120,26 @@ function AdminPage() {
 
       {selectedMuseum && (
         <div style={{ marginTop: '30px' }}>
-          <h2>Manage Artworks for Museum ID: {selectedMuseum}</h2>
+          <h2>Manage Artworks for: {selectedMuseumName}</h2>
+
+          <div style={{ marginBottom: '20px' }}>
+            <input
+              type="text"
+              placeholder="Search by Title or Artist"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ padding: '5px', width: '300px', marginRight: '10px' }}
+            />
+            <button onClick={handleDownload} style={{ backgroundColor: 'green', color: 'white' }}>Download Artworks JSON</button>
+          </div>
 
           <h3>Add New Single Artwork</h3>
-          <input
-            type="text"
-            placeholder="Title"
-            value={newArtwork.title}
-            onChange={e => setNewArtwork({ ...newArtwork, title: e.target.value })}
-            style={{ marginRight: '10px' }}
-          />
-          <input
-            type="text"
-            placeholder="Artist"
-            value={newArtwork.artist}
-            onChange={e => setNewArtwork({ ...newArtwork, artist: e.target.value })}
-            style={{ marginRight: '10px' }}
-          />
-          <input
-            type="text"
-            placeholder="Year"
-            value={newArtwork.year}
-            onChange={e => setNewArtwork({ ...newArtwork, year: e.target.value })}
-            style={{ marginRight: '10px' }}
-          />
-          <input
-            type="text"
-            placeholder="Exhibition"
-            value={newArtwork.exhibition}
-            onChange={e => setNewArtwork({ ...newArtwork, exhibition: e.target.value })}
-            style={{ marginRight: '10px' }}
-          />
-          <input
-            type="text"
-            placeholder="Text"
-            value={newArtwork.text}
-            onChange={e => setNewArtwork({ ...newArtwork, text: e.target.value })}
-            style={{ marginRight: '10px' }}
-          />
-          <input
-            type="text"
-            placeholder="Audiofile URL"
-            value={newArtwork.audiofile}
-            onChange={e => setNewArtwork({ ...newArtwork, audiofile: e.target.value })}
-            style={{ marginRight: '10px' }}
-          />
+          <input type="text" placeholder="Title" value={newArtwork.title} onChange={e => setNewArtwork({ ...newArtwork, title: e.target.value })} style={{ marginRight: '10px' }} />
+          <input type="text" placeholder="Artist" value={newArtwork.artist} onChange={e => setNewArtwork({ ...newArtwork, artist: e.target.value })} style={{ marginRight: '10px' }} />
+          <input type="text" placeholder="Year" value={newArtwork.year} onChange={e => setNewArtwork({ ...newArtwork, year: e.target.value })} style={{ marginRight: '10px' }} />
+          <input type="text" placeholder="Exhibition" value={newArtwork.exhibition} onChange={e => setNewArtwork({ ...newArtwork, exhibition: e.target.value })} style={{ marginRight: '10px' }} />
+          <input type="text" placeholder="Text" value={newArtwork.text} onChange={e => setNewArtwork({ ...newArtwork, text: e.target.value })} style={{ marginRight: '10px' }} />
+          <input type="text" placeholder="Audiofile URL" value={newArtwork.audiofile} onChange={e => setNewArtwork({ ...newArtwork, audiofile: e.target.value })} style={{ marginRight: '10px' }} />
           <button onClick={handleAddArtwork}>Add Artwork</button>
 
           <h3 style={{ marginTop: '30px' }}>Bulk Upload Artworks (Paste JSON)</h3>
@@ -155,7 +158,7 @@ function AdminPage() {
 
           <h3 style={{ marginTop: '30px' }}>Existing Artworks</h3>
           <ul>
-            {artworks.map((art) => (
+            {filteredArtworks.map((art) => (
               <li key={art.id} style={{ marginBottom: '10px' }}>
                 {art.title} by {art.artist} ({art.year})
               </li>
