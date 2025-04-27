@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request, redirect, session
+from flask import Flask, render_template_string, request, redirect, session, jsonify
 import psycopg2
 
 app = Flask(__name__)
@@ -35,7 +35,7 @@ def homepage():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             body {
-                background: #cce7ff; /* light blue */
+                background: #cce7ff;
                 font-family: 'Helvetica Neue', sans-serif;
                 padding: 40px;
                 text-align: center;
@@ -107,7 +107,7 @@ def show_museum(museum):
         <style>
             body {
                 font-family: 'Helvetica Neue', sans-serif;
-                background: #cce7ff; /* light blue */
+                background: #cce7ff;
                 padding: 20px;
             }
             a.back-link {
@@ -188,102 +188,15 @@ def show_museum(museum):
     """
     return render_template_string(html, museum=museum, artworks=rows)
 
-@app.route('/admin', methods=['GET', 'POST'])
-def admin():
-    if not session.get('logged_in'):
-        return redirect('/login')
-
-    if request.method == 'POST':
-        museum = request.form['museum']
-        title = request.form['title']
-        artist = request.form['artist']
-        year = request.form['year']
-        audio_url = request.form['audio_url']
-        description = request.form['description']
-
-        if museum not in museum_tables:
-            return "Invalid museum selection", 400
-
-        table_name = museum_tables[museum]
-
-        cur = conn.cursor()
-        try:
-            cur.execute(f"""
-                INSERT INTO {table_name} (title, artist, year, audio_url, description)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (title, artist, year, audio_url, description))
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            return f"Error: {str(e)}", 500
-        cur.close()
-
-        return redirect('/')
-
-    form_html = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Add New Artwork</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            body {
-                font-family: 'Helvetica Neue', sans-serif;
-                background: #cce7ff; /* light blue */
-                padding: 20px;
-            }
-            form {
-                max-width: 400px;
-                margin: auto;
-                background: #ffffff;
-                padding: 20px;
-                border-radius: 12px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            }
-            select, input, textarea {
-                width: 100%;
-                padding: 10px;
-                margin-bottom: 15px;
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                font-size: 16px;
-            }
-            button {
-                background: #fb8c00;
-                color: white;
-                padding: 12px;
-                width: 100%;
-                border: none;
-                border-radius: 8px;
-                font-size: 18px;
-                cursor: pointer;
-            }
-            button:hover {
-                background: #ef6c00;
-            }
-        </style>
-    </head>
-    <body>
-        <h2 style="text-align:center;">Add New Artwork</h2>
-        <form method="POST">
-            <select name="museum" required>
-                <option value="">Select Museum</option>
-                <option value="louvre">Louvre</option>
-                <option value="moma">MoMA</option>
-                <option value="uffizi">Uffizi Gallery</option>
-            </select>
-            <input type="text" name="title" placeholder="Title" required>
-            <input type="text" name="artist" placeholder="Artist" required>
-            <input type="number" name="year" placeholder="Year" required>
-            <input type="text" name="audio_url" placeholder="Audio URL (or 'none')" required>
-            <textarea name="description" placeholder="Description" required></textarea>
-            <button type="submit">Add Artwork</button>
-        </form>
-    </body>
-    </html>
-    """
-    return render_template_string(form_html)
+# ✅ NEW: API Endpoint to get museum list as JSON
+@app.route('/api/museums', methods=['GET'])
+def get_museums():
+    museums = [
+        {"id": "louvre", "name": "Louvre"},
+        {"id": "moma", "name": "MoMA"},
+        {"id": "uffizi", "name": "Uffizi Gallery"}
+    ]
+    return jsonify(museums)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
