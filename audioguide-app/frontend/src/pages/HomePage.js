@@ -1,41 +1,32 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 function HomePage() {
-  const [museums, setMuseums] = useState([]);
-
-  useEffect(() => {
-    fetch('http://192.168.178.61:5000/api/museums')
-      .then(response => response.json())
-      .then(data => setMuseums(data))
-      .catch(error => console.error('Error fetching museums:', error));
-  }, []);
+  const museums = [
+    { id: 'louvre', name: 'Louvre' },
+    { id: 'moma', name: 'MoMA' },
+    { id: 'uffizi', name: 'Uffizi Gallery' }
+  ];
 
   return (
-    <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#ffa726', minHeight: '100vh' }}>
-      <h1>Museum Audioguide</h1>
-      <p>Choose your museum!</p>
+    <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#ffe0b2', minHeight: '100vh' }}>
+      <h1 style={{ marginBottom: '20px' }}>Museum Audioguide</h1>
 
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: '20px', 
-        marginTop: '40px', 
-        alignItems: 'center' 
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '20px' }}>
         {museums.map((museum) => (
           <Link 
             key={museum.id} 
-            to={`/museum/${museum.id}`} 
-            style={{ 
-              backgroundColor: '#fb8c00', 
-              color: 'white', 
-              padding: '15px 30px', 
-              borderRadius: '10px', 
-              textDecoration: 'none', 
+            to={`/museum/${museum.id}`}
+            style={{
+              display: 'inline-block',
+              padding: '20px',
+              backgroundColor: '#fb8c00',
+              color: 'white',
+              borderRadius: '12px',
+              textDecoration: 'none',
               fontSize: '20px',
-              width: '250px',
-              textAlign: 'center'
+              width: '200px',
+              textAlign: 'center',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
             }}
           >
             {museum.name}
