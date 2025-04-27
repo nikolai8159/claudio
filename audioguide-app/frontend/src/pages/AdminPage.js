@@ -12,6 +12,9 @@ function AdminPage() {
   const [editedArtwork, setEditedArtwork] = useState({});
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [newArtwork, setNewArtwork] = useState({ title: '', artist: '', year: '', exhibition: '', text: '', audiofile: '' });
+  const [bulkArtworksText, setBulkArtworksText] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     fetchMuseums();
@@ -113,6 +116,41 @@ function AdminPage() {
       .catch(error => console.error('Error saving artwork:', error));
   };
 
+  const handleAddArtwork = () => {
+    fetch(`http://192.168.178.61:5000/api/museums/${selectedMuseum}/artworks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newArtwork)
+    })
+      .then(() => {
+        setNewArtwork({ title: '', artist: '', year: '', exhibition: '', text: '', audiofile: '' });
+        setSuccessMessage('Upload successful!');
+        handleSelectMuseum(selectedMuseum);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      })
+      .catch(error => console.error('Error adding artwork:', error));
+  };
+
+  const handleBulkUpload = () => {
+    try {
+      const artworksList = JSON.parse(bulkArtworksText);
+      fetch(`http://192.168.178.61:5000/api/museums/${selectedMuseum}/artworks/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(artworksList)
+      })
+        .then(() => {
+          setBulkArtworksText('');
+          setSuccessMessage('Bulk upload successful!');
+          handleSelectMuseum(selectedMuseum);
+          setTimeout(() => setSuccessMessage(''), 3000);
+        })
+        .catch(error => console.error('Error bulk uploading artworks:', error));
+    } catch (err) {
+      alert('Invalid JSON format. Please check your input.');
+    }
+  };
+
   return (
     <div style={{ padding: '20px' }}>
       <h1>Admin Console</h1>
@@ -130,10 +168,37 @@ function AdminPage() {
       {selectedMuseum && (
         <div style={{ marginTop: '30px' }}>
           <h2>Manage Artworks for: {selectedMuseumName}</h2>
+
+          {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
+
+          <div style={{ marginBottom: '20px' }}>
+            <h3>Add Single Artwork</h3>
+            <input type="text" placeholder="Title" value={newArtwork.title} onChange={e => setNewArtwork({ ...newArtwork, title: e.target.value })} />
+            <input type="text" placeholder="Artist" value={newArtwork.artist} onChange={e => setNewArtwork({ ...newArtwork, artist: e.target.value })} />
+            <input type="text" placeholder="Year" value={newArtwork.year} onChange={e => setNewArtwork({ ...newArtwork, year: e.target.value })} />
+            <input type="text" placeholder="Exhibition" value={newArtwork.exhibition} onChange={e => setNewArtwork({ ...newArtwork, exhibition: e.target.value })} />
+            <input type="text" placeholder="Text" value={newArtwork.text} onChange={e => setNewArtwork({ ...newArtwork, text: e.target.value })} />
+            <input type="text" placeholder="Audiofile URL" value={newArtwork.audiofile} onChange={e => setNewArtwork({ ...newArtwork, audiofile: e.target.value })} />
+            <button onClick={handleAddArtwork}>Add Artwork</button>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <h3>Bulk Upload Artworks (Paste JSON)</h3>
+            <textarea
+              value={bulkArtworksText}
+              onChange={e => setBulkArtworksText(e.target.value)}
+              rows="10"
+              cols="80"
+              placeholder='Paste artworks JSON array here'
+            />
+            <br />
+            <button onClick={handleBulkUpload} style={{ marginTop: '10px' }}>Bulk Upload Artworks</button>
+          </div>
+
           <div style={{ marginBottom: '10px' }}>
             <button onClick={handleDownload} style={{ marginRight: '10px' }}>Download JSON</button>
             {selectedRows.length > 0 && (
-              <button onClick={bulkDelete} style={{ backgroundColor: 'red', color: 'white' }}>Bulk Delete</button>
+              <button onClick={bulkDelete} style={{ backgroundColor: 'red', color: 'white' }}>Delete</button>
             )}
           </div>
 
@@ -181,7 +246,9 @@ function AdminPage() {
                       <td>{art.year}</td>
                       <td>{art.exhibition}</td>
                       <td>
-                        <button onClick={() => startEditing(art)}>Edit</button>
+                        {selectedRows.includes(art.id) && (
+                          <button onClick={() => startEditing(art)}>Edit</button>
+                        )}
                       </td>
                     </>
                   )}
