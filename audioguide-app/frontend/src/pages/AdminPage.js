@@ -6,17 +6,20 @@ function AdminPage() {
   const [selectedMuseumName, setSelectedMuseumName] = useState('');
   const [artworks, setArtworks] = useState([]);
   const [filteredArtworks, setFilteredArtworks] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filterFields, setFilterFields] = useState({ title: '', artist: '', year: '', exhibition: '' });
+  const [selectedRows, setSelectedRows] = useState([]);
   const [editingArtworkId, setEditingArtworkId] = useState(null);
   const [editedArtwork, setEditedArtwork] = useState({});
+  const [sortField, setSortField] = useState('id');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     fetchMuseums();
   }, []);
 
   useEffect(() => {
-    handleSearch();
-  }, [searchTerm, artworks]);
+    handleSearchAndSort();
+  }, [filterFields, artworks, sortField, sortDirection]);
 
   const fetchMuseums = () => {
     fetch('http://192.168.178.61:5000/api/museums')
@@ -35,19 +38,25 @@ function AdminPage() {
       .catch(error => console.error('Error fetching artworks:', error));
   };
 
-  const handleSearch = () => {
-    const lowerSearch = searchTerm.toLowerCase();
-    const filtered = artworks.filter(art =>
-      art.title.toLowerCase().includes(lowerSearch) ||
-      art.artist.toLowerCase().includes(lowerSearch)
-    );
-    setFilteredArtworks(filtered);
+  const handleSearchAndSort = () => {
+    let tempArtworks = [...artworks];
+    Object.keys(filterFields).forEach(key => {
+      if (filterFields[key]) {
+        tempArtworks = tempArtworks.filter(art => art[key]?.toString().toLowerCase().includes(filterFields[key].toLowerCase()));
+      }
+    });
+    tempArtworks.sort((a, b) => {
+      if (a[sortField] < b[sortField]) return sortDirection === 'asc' ? -1 : 1;
+      if (a[sortField] > b[sortField]) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+    setFilteredArtworks(tempArtworks);
   };
 
   const handleDownload = () => {
     const date = new Date().toISOString().split('T')[0];
     const filename = `${date}_artworks_${selectedMuseumName.toLowerCase().replace(/\s+/g, '-')}.json`;
-    const fileData = JSON.stringify(artworks, null, 2);
+    const fileData = JSON.stringify(filteredArtworks, null, 2);
     const blob = new Blob([fileData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -56,6 +65,30 @@ function AdminPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const handleCheckboxChange = (id) => {
+    setSelectedRows(prev =>
+      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
+    );
+  };
+
+  const bulkDelete = () => {
+    selectedRows.forEach(id => {
+      fetch(`http://192.168.178.61:5000/api/artworks/${id}`, { method: 'DELETE' })
+        .then(() => handleSelectMuseum(selectedMuseum))
+        .catch(error => console.error('Error deleting artwork:', error));
+    });
+    setSelectedRows([]);
   };
 
   const startEditing = (artwork) => {
@@ -80,14 +113,6 @@ function AdminPage() {
       .catch(error => console.error('Error saving artwork:', error));
   };
 
-  const deleteArtwork = (id) => {
-    fetch(`http://192.168.178.61:5000/api/artworks/${id}`, {
-      method: 'DELETE'
-    })
-      .then(() => handleSelectMuseum(selectedMuseum))
-      .catch(error => console.error('Error deleting artwork:', error));
-  };
-
   return (
     <div style={{ padding: '20px' }}>
       <h1>Admin Console</h1>
@@ -95,14 +120,9 @@ function AdminPage() {
       <h2>Museums</h2>
       <ul>
         {museums.map(museum => (
-          <li key={museum.id} style={{ marginBottom: '10px' }}>
+          <li key={museum.id}>
             {museum.name}
-            <button
-              onClick={() => handleSelectMuseum(museum.id)}
-              style={{ marginLeft: '10px', backgroundColor: 'blue', color: 'white' }}
-            >
-              Manage Artworks
-            </button>
+            <button onClick={() => handleSelectMuseum(museum.id)} style={{ marginLeft: '10px' }}>Manage Artworks</button>
           </li>
         ))}
       </ul>
@@ -110,41 +130,45 @@ function AdminPage() {
       {selectedMuseum && (
         <div style={{ marginTop: '30px' }}>
           <h2>Manage Artworks for: {selectedMuseumName}</h2>
-
-          <div style={{ marginBottom: '20px' }}>
-            <input
-              type="text"
-              placeholder="Search by Title or Artist"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ padding: '5px', width: '300px', marginRight: '10px' }}
-            />
-            <button onClick={handleDownload} style={{ backgroundColor: 'green', color: 'white' }}>Download Artworks JSON</button>
+          <div style={{ marginBottom: '10px' }}>
+            <button onClick={handleDownload} style={{ marginRight: '10px' }}>Download JSON</button>
+            {selectedRows.length > 0 && (
+              <button onClick={bulkDelete} style={{ backgroundColor: 'red', color: 'white' }}>Bulk Delete</button>
+            )}
           </div>
 
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
+            <thead>
               <tr>
-                <th>Title</th>
-                <th>Artist</th>
-                <th>Year</th>
-                <th>Exhibition</th>
-                <th>Text</th>
-                <th>Audiofile</th>
+                <th></th>
+                <th onClick={() => handleSort('id')}>ID</th>
+                <th onClick={() => handleSort('title')}>Title</th>
+                <th onClick={() => handleSort('artist')}>Artist</th>
+                <th onClick={() => handleSort('year')}>Year</th>
+                <th onClick={() => handleSort('exhibition')}>Exhibition</th>
                 <th>Actions</th>
+              </tr>
+              <tr>
+                <th></th>
+                <th></th>
+                <th><input value={filterFields.title} onChange={(e) => setFilterFields({ ...filterFields, title: e.target.value })} /></th>
+                <th><input value={filterFields.artist} onChange={(e) => setFilterFields({ ...filterFields, artist: e.target.value })} /></th>
+                <th><input value={filterFields.year} onChange={(e) => setFilterFields({ ...filterFields, year: e.target.value })} /></th>
+                <th><input value={filterFields.exhibition} onChange={(e) => setFilterFields({ ...filterFields, exhibition: e.target.value })} /></th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {filteredArtworks.map((art) => (
+              {filteredArtworks.map(art => (
                 <tr key={art.id}>
+                  <td><input type="checkbox" checked={selectedRows.includes(art.id)} onChange={() => handleCheckboxChange(art.id)} /></td>
+                  <td>{art.id}</td>
                   {editingArtworkId === art.id ? (
                     <>
                       <td><input value={editedArtwork.title} onChange={(e) => handleEditChange('title', e.target.value)} /></td>
                       <td><input value={editedArtwork.artist} onChange={(e) => handleEditChange('artist', e.target.value)} /></td>
                       <td><input value={editedArtwork.year} onChange={(e) => handleEditChange('year', e.target.value)} /></td>
                       <td><input value={editedArtwork.exhibition} onChange={(e) => handleEditChange('exhibition', e.target.value)} /></td>
-                      <td><input value={editedArtwork.text} onChange={(e) => handleEditChange('text', e.target.value)} /></td>
-                      <td><input value={editedArtwork.audiofile} onChange={(e) => handleEditChange('audiofile', e.target.value)} /></td>
                       <td>
                         <button onClick={saveEditedArtwork}>Save</button>
                         <button onClick={() => setEditingArtworkId(null)}>Cancel</button>
@@ -156,11 +180,8 @@ function AdminPage() {
                       <td>{art.artist}</td>
                       <td>{art.year}</td>
                       <td>{art.exhibition}</td>
-                      <td>{art.text}</td>
-                      <td>{art.audiofile}</td>
                       <td>
                         <button onClick={() => startEditing(art)}>Edit</button>
-                        <button onClick={() => deleteArtwork(art.id)}>Delete</button>
                       </td>
                     </>
                   )}
