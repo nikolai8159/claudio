@@ -9,7 +9,7 @@ CORS(app, resources={r"/api/*": {"origins": "http://192.168.178.61:3000"}})
 DB_HOST = "localhost"
 DB_NAME = "audioguide"
 DB_USER = "claudio"
-DB_PASS = "audioguide"  # <-- IMPORTANT: replace with your real password
+DB_PASS = "yourpassword"  # <-- IMPORTANT: replace with your real password
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -76,6 +76,38 @@ def get_artworks(museum_id):
     cur.close()
     conn.close()
     return jsonify(artworks)
+
+@app.route('/api/museums/<int:museum_id>/artworks', methods=['POST'])
+def add_artwork(museum_id):
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        INSERT INTO artworks (museum_id, title, artist, year, exhibition, text, audiofile)
+        VALUES (%s, %s, %s, %s, %s, %s, %s);
+    ''', (museum_id, data.get('title'), data.get('artist'), data.get('year'),
+          data.get('exhibition'), data.get('text'), data.get('audiofile')))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({"message": "Artwork added successfully!"}), 201
+
+@app.route('/api/museums/<int:museum_id>/artworks/bulk', methods=['POST'])
+def add_bulk_artworks(museum_id):
+    artworks = request.get_json()  # List of artworks
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    for art in artworks:
+        cur.execute('''
+            INSERT INTO artworks (museum_id, title, artist, year, exhibition, text, audiofile)
+            VALUES (%s, %s, %s, %s, %s, %s, %s);
+        ''', (museum_id, art.get('title'), art.get('artist'), art.get('year'), art.get('exhibition'), art.get('text'), art.get('audiofile')))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({"message": "Bulk artworks added successfully!"}), 201
 
 # -------------------------
 # Server Starter
