@@ -1,16 +1,16 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
-import MuseumPage from './pages/MuseumPage'; // <-- This is very important!
+import MuseumPage from './pages/MuseumPage';
+import AdminPage from './pages/AdminPage'; // <-- IMPORTANT: Import AdminPage
 
 function App() {
   return (
     <Router>
-      <div>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/museum/:museumId" element={<MuseumPage />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/museum/:museumId" element={<MuseumPage />} />
+        <Route path="/admin" element={<AdminPage />} /> {/* <-- IMPORTANT: Add Admin Route */}
+      </Routes>
     </Router>
   );
 }
