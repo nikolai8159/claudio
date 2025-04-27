@@ -2,23 +2,13 @@ import { useEffect, useState } from 'react';
 
 function AdminPage() {
   const [museums, setMuseums] = useState([]);
-  const [newMuseumName, setNewMuseumName] = useState('');
-  const [newMuseumLocation, setNewMuseumLocation] = useState('');
-  const [newMuseumDescription, setNewMuseumDescription] = useState('');
   const [selectedMuseum, setSelectedMuseum] = useState(null);
   const [selectedMuseumName, setSelectedMuseumName] = useState('');
   const [artworks, setArtworks] = useState([]);
   const [filteredArtworks, setFilteredArtworks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [newArtwork, setNewArtwork] = useState({
-    title: '',
-    artist: '',
-    year: '',
-    exhibition: '',
-    text: '',
-    audiofile: ''
-  });
-  const [bulkArtworksText, setBulkArtworksText] = useState('');
+  const [editingArtworkId, setEditingArtworkId] = useState(null);
+  const [editedArtwork, setEditedArtwork] = useState({});
 
   useEffect(() => {
     fetchMuseums();
@@ -45,37 +35,6 @@ function AdminPage() {
       .catch(error => console.error('Error fetching artworks:', error));
   };
 
-  const handleAddArtwork = () => {
-    fetch(`http://192.168.178.61:5000/api/museums/${selectedMuseum}/artworks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newArtwork)
-    })
-      .then(() => {
-        setNewArtwork({ title: '', artist: '', year: '', exhibition: '', text: '', audiofile: '' });
-        handleSelectMuseum(selectedMuseum);
-      })
-      .catch(error => console.error('Error adding artwork:', error));
-  };
-
-  const handleBulkUpload = () => {
-    try {
-      const artworksList = JSON.parse(bulkArtworksText);
-      fetch(`http://192.168.178.61:5000/api/museums/${selectedMuseum}/artworks/bulk`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(artworksList)
-      })
-        .then(() => {
-          setBulkArtworksText('');
-          handleSelectMuseum(selectedMuseum);
-        })
-        .catch(error => console.error('Error bulk uploading artworks:', error));
-    } catch (err) {
-      alert('Invalid JSON format. Please check your input.');
-    }
-  };
-
   const handleSearch = () => {
     const lowerSearch = searchTerm.toLowerCase();
     const filtered = artworks.filter(art =>
@@ -97,6 +56,36 @@ function AdminPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const startEditing = (artwork) => {
+    setEditingArtworkId(artwork.id);
+    setEditedArtwork({ ...artwork });
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditedArtwork({ ...editedArtwork, [field]: value });
+  };
+
+  const saveEditedArtwork = () => {
+    fetch(`http://192.168.178.61:5000/api/artworks/${editingArtworkId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editedArtwork)
+    })
+      .then(() => {
+        setEditingArtworkId(null);
+        handleSelectMuseum(selectedMuseum);
+      })
+      .catch(error => console.error('Error saving artwork:', error));
+  };
+
+  const deleteArtwork = (id) => {
+    fetch(`http://192.168.178.61:5000/api/artworks/${id}`, {
+      method: 'DELETE'
+    })
+      .then(() => handleSelectMuseum(selectedMuseum))
+      .catch(error => console.error('Error deleting artwork:', error));
   };
 
   return (
@@ -133,37 +122,52 @@ function AdminPage() {
             <button onClick={handleDownload} style={{ backgroundColor: 'green', color: 'white' }}>Download Artworks JSON</button>
           </div>
 
-          <h3>Add New Single Artwork</h3>
-          <input type="text" placeholder="Title" value={newArtwork.title} onChange={e => setNewArtwork({ ...newArtwork, title: e.target.value })} style={{ marginRight: '10px' }} />
-          <input type="text" placeholder="Artist" value={newArtwork.artist} onChange={e => setNewArtwork({ ...newArtwork, artist: e.target.value })} style={{ marginRight: '10px' }} />
-          <input type="text" placeholder="Year" value={newArtwork.year} onChange={e => setNewArtwork({ ...newArtwork, year: e.target.value })} style={{ marginRight: '10px' }} />
-          <input type="text" placeholder="Exhibition" value={newArtwork.exhibition} onChange={e => setNewArtwork({ ...newArtwork, exhibition: e.target.value })} style={{ marginRight: '10px' }} />
-          <input type="text" placeholder="Text" value={newArtwork.text} onChange={e => setNewArtwork({ ...newArtwork, text: e.target.value })} style={{ marginRight: '10px' }} />
-          <input type="text" placeholder="Audiofile URL" value={newArtwork.audiofile} onChange={e => setNewArtwork({ ...newArtwork, audiofile: e.target.value })} style={{ marginRight: '10px' }} />
-          <button onClick={handleAddArtwork}>Add Artwork</button>
-
-          <h3 style={{ marginTop: '30px' }}>Bulk Upload Artworks (Paste JSON)</h3>
-          <textarea
-            value={bulkArtworksText}
-            onChange={e => setBulkArtworksText(e.target.value)}
-            rows="10"
-            cols="80"
-            placeholder='Paste artworks JSON array here'
-            style={{ marginTop: '10px' }}
-          />
-          <br />
-          <button onClick={handleBulkUpload} style={{ marginTop: '10px', backgroundColor: 'green', color: 'white' }}>
-            Bulk Upload Artworks
-          </button>
-
-          <h3 style={{ marginTop: '30px' }}>Existing Artworks</h3>
-          <ul>
-            {filteredArtworks.map((art) => (
-              <li key={art.id} style={{ marginBottom: '10px' }}>
-                {art.title} by {art.artist} ({art.year})
-              </li>
-            ))}
-          </ul>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
+              <tr>
+                <th>Title</th>
+                <th>Artist</th>
+                <th>Year</th>
+                <th>Exhibition</th>
+                <th>Text</th>
+                <th>Audiofile</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredArtworks.map((art) => (
+                <tr key={art.id}>
+                  {editingArtworkId === art.id ? (
+                    <>
+                      <td><input value={editedArtwork.title} onChange={(e) => handleEditChange('title', e.target.value)} /></td>
+                      <td><input value={editedArtwork.artist} onChange={(e) => handleEditChange('artist', e.target.value)} /></td>
+                      <td><input value={editedArtwork.year} onChange={(e) => handleEditChange('year', e.target.value)} /></td>
+                      <td><input value={editedArtwork.exhibition} onChange={(e) => handleEditChange('exhibition', e.target.value)} /></td>
+                      <td><input value={editedArtwork.text} onChange={(e) => handleEditChange('text', e.target.value)} /></td>
+                      <td><input value={editedArtwork.audiofile} onChange={(e) => handleEditChange('audiofile', e.target.value)} /></td>
+                      <td>
+                        <button onClick={saveEditedArtwork}>Save</button>
+                        <button onClick={() => setEditingArtworkId(null)}>Cancel</button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{art.title}</td>
+                      <td>{art.artist}</td>
+                      <td>{art.year}</td>
+                      <td>{art.exhibition}</td>
+                      <td>{art.text}</td>
+                      <td>{art.audiofile}</td>
+                      <td>
+                        <button onClick={() => startEditing(art)}>Edit</button>
+                        <button onClick={() => deleteArtwork(art.id)}>Delete</button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
