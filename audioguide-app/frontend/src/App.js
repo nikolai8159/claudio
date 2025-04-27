@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
-// import MuseumPage from './pages/MuseumPage';  // 🔥 This line must be commented out or deleted!
+import MuseumPage from './pages/MuseumPage'; // <-- This is very important!
 
 function App() {
   return (
@@ -8,7 +8,7 @@ function App() {
       <div>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          {/* <Route path="/museum/:museumId" element={<MuseumPage />} /> */}
+          <Route path="/museum/:museumId" element={<MuseumPage />} />
         </Routes>
       </div>
     </Router>
