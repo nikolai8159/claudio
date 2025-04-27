@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://192.168.178.61:3000"}})
 
 # Database connection parameters
-DB_HOST = "localhost"
+DB_HOST = "127.0.0.1"
 DB_NAME = "audioguide"
 DB_USER = "claudio"
 DB_PASS = "audioguide"  # <-- IMPORTANT: replace with your real password
