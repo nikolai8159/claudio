@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
-// import MuseumPage from './pages/MuseumPage'; // temporarily disabled because MuseumPage.js does not exist yet
+// import MuseumPage from './pages/MuseumPage';  // 🔥 This line must be commented out or deleted!
 
 function App() {
   return (
