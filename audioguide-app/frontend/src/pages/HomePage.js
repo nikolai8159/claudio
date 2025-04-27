@@ -5,6 +5,9 @@ function HomePage() {
     <div>
       <h1>Museum Audioguide</h1>
       <p>Choose your museum!</p>
+
+      <h2>TEST: ARE WE SEEING THIS?</h2>
+
       <ul style={{ fontSize: '24px', marginTop: '20px' }}>
         <li><Link to="/museum/louvre" style={{ color: 'blue' }}>Louvre</Link></li>
         <li><Link to="/museum/moma" style={{ color: 'blue' }}>MoMA</Link></li>
