@@ -9,7 +9,7 @@ CORS(app, resources={r"/api/*": {"origins": "http://192.168.178.61:3000"}})
 DB_HOST = "localhost"
 DB_NAME = "audioguide"
 DB_USER = "claudio"
-DB_PASS = "yourpassword"  # <-- IMPORTANT: replace with your real password
+DB_PASS = "audioguide"  # <-- IMPORTANT: replace with your real password
 
 def get_db_connection():
     conn = psycopg2.connect(
