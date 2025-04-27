@@ -1,38 +1,41 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 function HomePage() {
-  const museums = [
-    { id: 'louvre', name: 'Louvre' },
-    { id: 'moma', name: 'MoMA' },
-    { id: 'uffizi', name: 'Uffizi Gallery' }
-  ];
+  const [museums, setMuseums] = useState([]);
+
+  useEffect(() => {
+    fetch('http://192.168.178.61:5000/api/museums')
+      .then(response => response.json())
+      .then(data => setMuseums(data))
+      .catch(error => console.error('Error fetching museums:', error));
+  }, []);
 
   return (
-    <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#ffe0b2', minHeight: '100vh' }}>
-      <h1 style={{ marginBottom: '20px' }}>Museum Audioguide</h1>
-
-      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '20px' }}>
-        {museums.map((museum) => (
-          <Link 
-            key={museum.id} 
-            to={`/museum/${museum.id}`}
-            style={{
-              display: 'inline-block',
-              padding: '20px',
-              backgroundColor: '#fb8c00',
-              color: 'white',
-              borderRadius: '12px',
+    <div style={{
+      background: 'linear-gradient(to right, #ffecd2, #fcb69f)',
+      minHeight: '100vh',
+      padding: '20px'
+    }}>
+      <h1 style={{ fontSize: '2.5rem' }}>Museum Audioguide</h1>
+      <p style={{ fontSize: '1.5rem' }}>Choose your museum!</p>
+      <ul style={{ fontSize: '1.5rem', marginTop: '20px', listStyleType: 'none', padding: 0 }}>
+        {museums.map(museum => (
+          <li key={museum.id} style={{ marginBottom: '15px' }}>
+            <Link to={`/museum/${museum.id}`} style={{
+              color: '#003366',
               textDecoration: 'none',
-              fontSize: '20px',
-              width: '200px',
-              textAlign: 'center',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-            }}
-          >
-            {museum.name}
-          </Link>
+              background: '#ffffff',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              display: 'inline-block',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            }}>
+              {museum.name}
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
