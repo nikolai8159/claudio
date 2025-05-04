@@ -15,52 +15,7 @@ function AdminPage() {
   const [newArtwork, setNewArtwork] = useState({ title: '', artist: '', year: '', exhibition: '', text: '', audiofile: '' });
   const [bulkArtworksText, setBulkArtworksText] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
-  const inputStyle = {
-    backgroundColor: '#1c2c3c',
-    color: 'white',
-    border: '1px solid #555',
-    margin: '3px',
-    padding: '6px',
-    borderRadius: '4px'
-  };
-
-  const buttonStyle = {
-    backgroundColor: '#007acc',
-    color: 'white',
-    border: 'none',
-    padding: '6px 12px',
-    margin: '5px',
-    borderRadius: '4px',
-    cursor: 'pointer'
-  };
-
-  const tableStyle = {
-    width: '100%',
-    borderCollapse: 'collapse',
-    backgroundColor: '#1e3a5f',
-    color: 'white'
-  };
-
-  const thStyle = {
-    borderBottom: '1px solid #888',
-    padding: '8px',
-    backgroundColor: '#27496d',
-    cursor: 'pointer'
-  };
-
-  const tdStyle = {
-    padding: '8px',
-    borderBottom: '1px solid #444'
-  };
-
-  useEffect(() => {
-    fetchMuseums();
-  }, []);
-
-  useEffect(() => {
-    handleSearchAndSort();
-  }, [filterFields, artworks, sortField, sortDirection]);
+  const [darkMode, setDarkMode] = useState(true);
 
   const fetchMuseums = () => {
     fetch('http://192.168.178.61:5000/api/museums')
@@ -80,61 +35,47 @@ function AdminPage() {
   };
 
   const handleSearchAndSort = () => {
-    let tempArtworks = [...artworks];
+    let temp = [...artworks];
     Object.keys(filterFields).forEach(key => {
       if (filterFields[key]) {
-        tempArtworks = tempArtworks.filter(art => art[key]?.toString().toLowerCase().includes(filterFields[key].toLowerCase()));
+        temp = temp.filter(art => art[key]?.toString().toLowerCase().includes(filterFields[key].toLowerCase()));
       }
     });
-    tempArtworks.sort((a, b) => {
+    temp.sort((a, b) => {
       if (a[sortField] < b[sortField]) return sortDirection === 'asc' ? -1 : 1;
       if (a[sortField] > b[sortField]) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-    setFilteredArtworks(tempArtworks);
+    setFilteredArtworks(temp);
   };
 
   const handleDownload = () => {
     const date = new Date().toISOString().split('T')[0];
     const filename = `${date}_artworks_${selectedMuseumName.toLowerCase().replace(/\s+/g, '-')}.json`;
-    const fileData = JSON.stringify(filteredArtworks, null, 2);
-    const blob = new Blob([fileData], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(filteredArtworks, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
   };
 
   const handleCheckboxChange = (id) => {
-    setSelectedRows(prev =>
-      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
-    );
+    setSelectedRows(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
   };
 
   const bulkDelete = () => {
     selectedRows.forEach(id => {
       fetch(`http://192.168.178.61:5000/api/artworks/${id}`, { method: 'DELETE' })
         .then(() => handleSelectMuseum(selectedMuseum))
-        .catch(error => console.error('Error deleting artwork:', error));
+        .catch(err => console.error('Delete error', err));
     });
     setSelectedRows([]);
   };
 
-  const startEditing = (artwork) => {
-    setEditingArtworkId(artwork.id);
-    setEditedArtwork({ ...artwork });
+  const startEditing = (art) => {
+    setEditingArtworkId(art.id);
+    setEditedArtwork({ ...art });
   };
 
   const handleEditChange = (field, value) => {
@@ -146,12 +87,10 @@ function AdminPage() {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editedArtwork)
-    })
-      .then(() => {
-        setEditingArtworkId(null);
-        handleSelectMuseum(selectedMuseum);
-      })
-      .catch(error => console.error('Error saving artwork:', error));
+    }).then(() => {
+      setEditingArtworkId(null);
+      handleSelectMuseum(selectedMuseum);
+    }).catch(err => console.error('Save error', err));
   };
 
   const handleAddArtwork = () => {
@@ -159,14 +98,12 @@ function AdminPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newArtwork)
-    })
-      .then(() => {
-        setNewArtwork({ title: '', artist: '', year: '', exhibition: '', text: '', audiofile: '' });
-        setSuccessMessage('Upload successful!');
-        handleSelectMuseum(selectedMuseum);
-        setTimeout(() => setSuccessMessage(''), 3000);
-      })
-      .catch(error => console.error('Error adding artwork:', error));
+    }).then(() => {
+      setNewArtwork({ title: '', artist: '', year: '', exhibition: '', text: '', audiofile: '' });
+      setSuccessMessage('Upload successful!');
+      handleSelectMuseum(selectedMuseum);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    }).catch(err => console.error('Add error', err));
   };
 
   const handleBulkUpload = () => {
@@ -176,127 +113,208 @@ function AdminPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(artworksList)
-      })
-        .then(() => {
-          setBulkArtworksText('');
-          setSuccessMessage('Bulk upload successful!');
-          handleSelectMuseum(selectedMuseum);
-          setTimeout(() => setSuccessMessage(''), 3000);
-        })
-        .catch(error => console.error('Error bulk uploading artworks:', error));
-    } catch (err) {
-      alert('Invalid JSON format. Please check your input.');
+      }).then(() => {
+        setBulkArtworksText('');
+        setSuccessMessage('Bulk upload successful!');
+        handleSelectMuseum(selectedMuseum);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }).catch(err => console.error('Bulk upload error', err));
+    } catch {
+      alert('Invalid JSON.');
     }
   };
 
+  useEffect(() => {
+    fetchMuseums();
+  }, []);
+
+  useEffect(() => {
+    handleSearchAndSort();
+  }, [artworks, filterFields, sortField, sortDirection]);
+
+  const theme = {
+    background: darkMode ? '#001f3f' : '#f5f5f5',
+    text: darkMode ? '#ffffff' : '#000000',
+    inputBg: darkMode ? '#1c2c3c' : '#ffffff',
+    inputText: darkMode ? '#ffffff' : '#000000',
+    buttonBg: darkMode ? '#007acc' : '#004080',
+    tableBg: darkMode ? '#1e3a5f' : '#e6f0ff',
+    border: darkMode ? '#444' : '#ccc'
+  };
+
+  const containerStyle = {
+    display: 'flex',
+    flexDirection: 'row',
+    height: '100vh',
+    backgroundColor: theme.background,
+    color: theme.text
+  };
+
+  const sidebarStyle = {
+    minWidth: '200px',
+    backgroundColor: theme.tableBg,
+    padding: '20px',
+    overflowY: 'auto'
+  };
+
+  const mainStyle = {
+    flexGrow: 1,
+    padding: '20px',
+    overflowX: 'auto'
+  };
+
+  const inputStyle = {
+    backgroundColor: theme.inputBg,
+    color: theme.inputText,
+    border: `1px solid ${theme.border}`,
+    padding: '6px',
+    margin: '4px',
+    borderRadius: '4px',
+    minWidth: '100px'
+  };
+
+  const buttonStyle = {
+    backgroundColor: theme.buttonBg,
+    color: '#fff',
+    padding: '6px 12px',
+    margin: '4px',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer'
+  };
+
+  const tableStyle = {
+    width: '100%',
+    backgroundColor: theme.tableBg,
+    borderCollapse: 'collapse'
+  };
+
+  const thStyle = {
+    borderBottom: `1px solid ${theme.border}`,
+    padding: '8px',
+    textAlign: 'left'
+  };
+
+  const tdStyle = {
+    padding: '8px',
+    borderBottom: `1px solid ${theme.border}`
+  };
+
   return (
-    <div style={{ padding: '20px', backgroundColor: '#003366', minHeight: '100vh', color: 'white' }}>
-      <h1>Admin Console</h1>
-      <h2>Museums</h2>
-      <ul>
-        {museums.map(museum => (
-          <li key={museum.id}>
-            {museum.name}
-            <button onClick={() => handleSelectMuseum(museum.id)} style={buttonStyle}>Manage Artworks</button>
-          </li>
-        ))}
-      </ul>
+    <div style={containerStyle}>
+      <div style={sidebarStyle}>
+        <h3>Museums</h3>
+        <button onClick={() => setDarkMode(!darkMode)} style={buttonStyle}>
+          Toggle {darkMode ? 'Light' : 'Dark'} Mode
+        </button>
+        <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
+          {museums.map(m => (
+            <li key={m.id}>
+              <button onClick={() => handleSelectMuseum(m.id)} style={{ ...buttonStyle, width: '100%' }}>
+                {m.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      {selectedMuseum && (
-        <div style={{ marginTop: '30px' }}>
-          <h2>Manage Artworks for: {selectedMuseumName}</h2>
-          {successMessage && <p style={{ color: 'lightgreen' }}>{successMessage}</p>}
+      <div style={mainStyle}>
+        <h2>Admin Console</h2>
+        {selectedMuseum && (
+          <>
+            <h3>{selectedMuseumName}</h3>
+            {successMessage && <p style={{ color: 'lightgreen' }}>{successMessage}</p>}
 
-          <div style={{ marginBottom: '20px' }}>
-            <h3>Add Single Artwork</h3>
-            {['title', 'artist', 'year', 'exhibition', 'text', 'audiofile'].map(field => (
-              <input
-                key={field}
-                type="text"
-                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                value={newArtwork[field]}
-                onChange={e => setNewArtwork({ ...newArtwork, [field]: e.target.value })}
-                style={inputStyle}
-              />
-            ))}
-            <button onClick={handleAddArtwork} style={buttonStyle}>Add Artwork</button>
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <h3>Bulk Upload Artworks (Paste JSON)</h3>
-            <textarea
-              value={bulkArtworksText}
-              onChange={e => setBulkArtworksText(e.target.value)}
-              rows="10"
-              cols="80"
-              placeholder='Paste artworks JSON array here'
-              style={{ ...inputStyle, width: '100%' }}
-            />
-            <br />
-            <button onClick={handleBulkUpload} style={buttonStyle}>Bulk Upload Artworks</button>
-          </div>
-
-          <div style={{ marginBottom: '10px' }}>
-            <button onClick={handleDownload} style={buttonStyle}>Download JSON</button>
-            {selectedRows.length > 0 && (
-              <button onClick={bulkDelete} style={{ ...buttonStyle, backgroundColor: 'red' }}>Delete</button>
-            )}
-          </div>
-
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}></th>
-                <th style={thStyle} onClick={() => handleSort('id')}>ID</th>
-                <th style={thStyle} onClick={() => handleSort('title')}>Title</th>
-                <th style={thStyle} onClick={() => handleSort('artist')}>Artist</th>
-                <th style={thStyle} onClick={() => handleSort('year')}>Year</th>
-                <th style={thStyle} onClick={() => handleSort('exhibition')}>Exhibition</th>
-                <th style={thStyle}>Actions</th>
-              </tr>
-              <tr>
-                <th></th>
-                <th></th>
-                {['title', 'artist', 'year', 'exhibition'].map(field => (
-                  <th key={field}><input value={filterFields[field]} onChange={(e) => setFilterFields({ ...filterFields, [field]: e.target.value })} style={inputStyle} /></th>
-                ))}
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredArtworks.map(art => (
-                <tr key={art.id}>
-                  <td style={tdStyle}><input type="checkbox" checked={selectedRows.includes(art.id)} onChange={() => handleCheckboxChange(art.id)} /></td>
-                  <td style={tdStyle}>{art.id}</td>
-                  {editingArtworkId === art.id ? (
-                    <>
-                      {['title', 'artist', 'year', 'exhibition'].map(field => (
-                        <td key={field} style={tdStyle}><input value={editedArtwork[field]} onChange={(e) => handleEditChange(field, e.target.value)} style={inputStyle} /></td>
-                      ))}
-                      <td style={tdStyle}>
-                        <button onClick={saveEditedArtwork} style={buttonStyle}>Save</button>
-                        <button onClick={() => setEditingArtworkId(null)} style={buttonStyle}>Cancel</button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td style={tdStyle}>{art.title}</td>
-                      <td style={tdStyle}>{art.artist}</td>
-                      <td style={tdStyle}>{art.year}</td>
-                      <td style={tdStyle}>{art.exhibition}</td>
-                      <td style={tdStyle}>
-                        {selectedRows.includes(art.id) && (
-                          <button onClick={() => startEditing(art)} style={buttonStyle}>Edit</button>
-                        )}
-                      </td>
-                    </>
-                  )}
-                </tr>
+            <div>
+              <h4>Add Artwork</h4>
+              {Object.keys(newArtwork).map(key => (
+                <input
+                  key={key}
+                  placeholder={key}
+                  value={newArtwork[key]}
+                  onChange={e => setNewArtwork({ ...newArtwork, [key]: e.target.value })}
+                  style={inputStyle}
+                />
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              <button onClick={handleAddArtwork} style={buttonStyle}>Add</button>
+            </div>
+
+            <div>
+              <h4>Bulk Upload</h4>
+              <textarea
+                rows="8"
+                value={bulkArtworksText}
+                onChange={e => setBulkArtworksText(e.target.value)}
+                style={{ ...inputStyle, width: '100%' }}
+              />
+              <button onClick={handleBulkUpload} style={buttonStyle}>Upload JSON</button>
+            </div>
+
+            <div>
+              <button onClick={handleDownload} style={buttonStyle}>Download JSON</button>
+              {selectedRows.length > 0 && (
+                <button onClick={bulkDelete} style={{ ...buttonStyle, backgroundColor: 'red' }}>
+                  Delete Selected
+                </button>
+              )}
+            </div>
+
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}></th>
+                  <th style={thStyle} onClick={() => setSortField('id')}>ID</th>
+                  {['title', 'artist', 'year', 'exhibition'].map(key => (
+                    <th key={key} style={thStyle} onClick={() => setSortField(key)}>{key}</th>
+                  ))}
+                  <th style={thStyle}>Actions</th>
+                </tr>
+                <tr>
+                  <th></th>
+                  <th></th>
+                  {['title', 'artist', 'year', 'exhibition'].map(key => (
+                    <th key={key}><input value={filterFields[key]} onChange={e => setFilterFields({ ...filterFields, [key]: e.target.value })} style={inputStyle} /></th>
+                  ))}
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredArtworks.map(art => (
+                  <tr key={art.id}>
+                    <td style={tdStyle}><input type="checkbox" checked={selectedRows.includes(art.id)} onChange={() => handleCheckboxChange(art.id)} /></td>
+                    <td style={tdStyle}>{art.id}</td>
+                    {editingArtworkId === art.id ? (
+                      <>
+                        {['title', 'artist', 'year', 'exhibition'].map(field => (
+                          <td key={field} style={tdStyle}>
+                            <input value={editedArtwork[field]} onChange={(e) => handleEditChange(field, e.target.value)} style={inputStyle} />
+                          </td>
+                        ))}
+                        <td style={tdStyle}>
+                          <button onClick={saveEditedArtwork} style={buttonStyle}>Save</button>
+                          <button onClick={() => setEditingArtworkId(null)} style={buttonStyle}>Cancel</button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td style={tdStyle}>{art.title}</td>
+                        <td style={tdStyle}>{art.artist}</td>
+                        <td style={tdStyle}>{art.year}</td>
+                        <td style={tdStyle}>{art.exhibition}</td>
+                        <td style={tdStyle}>
+                          {selectedRows.includes(art.id) && (
+                            <button onClick={() => startEditing(art)} style={buttonStyle}>Edit</button>
+                          )}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
     </div>
   );
 }
