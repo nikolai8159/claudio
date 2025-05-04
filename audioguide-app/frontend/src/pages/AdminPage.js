@@ -16,6 +16,44 @@ function AdminPage() {
   const [bulkArtworksText, setBulkArtworksText] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  const inputStyle = {
+    backgroundColor: '#1c2c3c',
+    color: 'white',
+    border: '1px solid #555',
+    margin: '3px',
+    padding: '6px',
+    borderRadius: '4px'
+  };
+
+  const buttonStyle = {
+    backgroundColor: '#007acc',
+    color: 'white',
+    border: 'none',
+    padding: '6px 12px',
+    margin: '5px',
+    borderRadius: '4px',
+    cursor: 'pointer'
+  };
+
+  const tableStyle = {
+    width: '100%',
+    borderCollapse: 'collapse',
+    backgroundColor: '#1e3a5f',
+    color: 'white'
+  };
+
+  const thStyle = {
+    borderBottom: '1px solid #888',
+    padding: '8px',
+    backgroundColor: '#27496d',
+    cursor: 'pointer'
+  };
+
+  const tdStyle = {
+    padding: '8px',
+    borderBottom: '1px solid #444'
+  };
+
   useEffect(() => {
     fetchMuseums();
   }, []);
@@ -159,7 +197,7 @@ function AdminPage() {
         {museums.map(museum => (
           <li key={museum.id}>
             {museum.name}
-            <button onClick={() => handleSelectMuseum(museum.id)} style={{ marginLeft: '10px' }}>Manage Artworks</button>
+            <button onClick={() => handleSelectMuseum(museum.id)} style={buttonStyle}>Manage Artworks</button>
           </li>
         ))}
       </ul>
@@ -167,18 +205,21 @@ function AdminPage() {
       {selectedMuseum && (
         <div style={{ marginTop: '30px' }}>
           <h2>Manage Artworks for: {selectedMuseumName}</h2>
-
           {successMessage && <p style={{ color: 'lightgreen' }}>{successMessage}</p>}
 
           <div style={{ marginBottom: '20px' }}>
             <h3>Add Single Artwork</h3>
-            <input type="text" placeholder="Title" value={newArtwork.title} onChange={e => setNewArtwork({ ...newArtwork, title: e.target.value })} />
-            <input type="text" placeholder="Artist" value={newArtwork.artist} onChange={e => setNewArtwork({ ...newArtwork, artist: e.target.value })} />
-            <input type="text" placeholder="Year" value={newArtwork.year} onChange={e => setNewArtwork({ ...newArtwork, year: e.target.value })} />
-            <input type="text" placeholder="Exhibition" value={newArtwork.exhibition} onChange={e => setNewArtwork({ ...newArtwork, exhibition: e.target.value })} />
-            <input type="text" placeholder="Text" value={newArtwork.text} onChange={e => setNewArtwork({ ...newArtwork, text: e.target.value })} />
-            <input type="text" placeholder="Audiofile URL" value={newArtwork.audiofile} onChange={e => setNewArtwork({ ...newArtwork, audiofile: e.target.value })} />
-            <button onClick={handleAddArtwork}>Add Artwork</button>
+            {['title', 'artist', 'year', 'exhibition', 'text', 'audiofile'].map(field => (
+              <input
+                key={field}
+                type="text"
+                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                value={newArtwork[field]}
+                onChange={e => setNewArtwork({ ...newArtwork, [field]: e.target.value })}
+                style={inputStyle}
+              />
+            ))}
+            <button onClick={handleAddArtwork} style={buttonStyle}>Add Artwork</button>
           </div>
 
           <div style={{ marginBottom: '20px' }}>
@@ -189,64 +230,63 @@ function AdminPage() {
               rows="10"
               cols="80"
               placeholder='Paste artworks JSON array here'
+              style={{ ...inputStyle, width: '100%' }}
             />
             <br />
-            <button onClick={handleBulkUpload} style={{ marginTop: '10px' }}>Bulk Upload Artworks</button>
+            <button onClick={handleBulkUpload} style={buttonStyle}>Bulk Upload Artworks</button>
           </div>
 
           <div style={{ marginBottom: '10px' }}>
-            <button onClick={handleDownload} style={{ marginRight: '10px' }}>Download JSON</button>
+            <button onClick={handleDownload} style={buttonStyle}>Download JSON</button>
             {selectedRows.length > 0 && (
-              <button onClick={bulkDelete} style={{ backgroundColor: 'red', color: 'white' }}>Delete</button>
+              <button onClick={bulkDelete} style={{ ...buttonStyle, backgroundColor: 'red' }}>Delete</button>
             )}
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={tableStyle}>
             <thead>
               <tr>
-                <th></th>
-                <th onClick={() => handleSort('id')}>ID</th>
-                <th onClick={() => handleSort('title')}>Title</th>
-                <th onClick={() => handleSort('artist')}>Artist</th>
-                <th onClick={() => handleSort('year')}>Year</th>
-                <th onClick={() => handleSort('exhibition')}>Exhibition</th>
-                <th>Actions</th>
+                <th style={thStyle}></th>
+                <th style={thStyle} onClick={() => handleSort('id')}>ID</th>
+                <th style={thStyle} onClick={() => handleSort('title')}>Title</th>
+                <th style={thStyle} onClick={() => handleSort('artist')}>Artist</th>
+                <th style={thStyle} onClick={() => handleSort('year')}>Year</th>
+                <th style={thStyle} onClick={() => handleSort('exhibition')}>Exhibition</th>
+                <th style={thStyle}>Actions</th>
               </tr>
               <tr>
                 <th></th>
                 <th></th>
-                <th><input value={filterFields.title} onChange={(e) => setFilterFields({ ...filterFields, title: e.target.value })} /></th>
-                <th><input value={filterFields.artist} onChange={(e) => setFilterFields({ ...filterFields, artist: e.target.value })} /></th>
-                <th><input value={filterFields.year} onChange={(e) => setFilterFields({ ...filterFields, year: e.target.value })} /></th>
-                <th><input value={filterFields.exhibition} onChange={(e) => setFilterFields({ ...filterFields, exhibition: e.target.value })} /></th>
+                {['title', 'artist', 'year', 'exhibition'].map(field => (
+                  <th key={field}><input value={filterFields[field]} onChange={(e) => setFilterFields({ ...filterFields, [field]: e.target.value })} style={inputStyle} /></th>
+                ))}
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {filteredArtworks.map(art => (
                 <tr key={art.id}>
-                  <td><input type="checkbox" checked={selectedRows.includes(art.id)} onChange={() => handleCheckboxChange(art.id)} /></td>
-                  <td>{art.id}</td>
+                  <td style={tdStyle}><input type="checkbox" checked={selectedRows.includes(art.id)} onChange={() => handleCheckboxChange(art.id)} /></td>
+                  <td style={tdStyle}>{art.id}</td>
                   {editingArtworkId === art.id ? (
                     <>
-                      <td><input value={editedArtwork.title} onChange={(e) => handleEditChange('title', e.target.value)} /></td>
-                      <td><input value={editedArtwork.artist} onChange={(e) => handleEditChange('artist', e.target.value)} /></td>
-                      <td><input value={editedArtwork.year} onChange={(e) => handleEditChange('year', e.target.value)} /></td>
-                      <td><input value={editedArtwork.exhibition} onChange={(e) => handleEditChange('exhibition', e.target.value)} /></td>
-                      <td>
-                        <button onClick={saveEditedArtwork}>Save</button>
-                        <button onClick={() => setEditingArtworkId(null)}>Cancel</button>
+                      {['title', 'artist', 'year', 'exhibition'].map(field => (
+                        <td key={field} style={tdStyle}><input value={editedArtwork[field]} onChange={(e) => handleEditChange(field, e.target.value)} style={inputStyle} /></td>
+                      ))}
+                      <td style={tdStyle}>
+                        <button onClick={saveEditedArtwork} style={buttonStyle}>Save</button>
+                        <button onClick={() => setEditingArtworkId(null)} style={buttonStyle}>Cancel</button>
                       </td>
                     </>
                   ) : (
                     <>
-                      <td>{art.title}</td>
-                      <td>{art.artist}</td>
-                      <td>{art.year}</td>
-                      <td>{art.exhibition}</td>
-                      <td>
+                      <td style={tdStyle}>{art.title}</td>
+                      <td style={tdStyle}>{art.artist}</td>
+                      <td style={tdStyle}>{art.year}</td>
+                      <td style={tdStyle}>{art.exhibition}</td>
+                      <td style={tdStyle}>
                         {selectedRows.includes(art.id) && (
-                          <button onClick={() => startEditing(art)}>Edit</button>
+                          <button onClick={() => startEditing(art)} style={buttonStyle}>Edit</button>
                         )}
                       </td>
                     </>
