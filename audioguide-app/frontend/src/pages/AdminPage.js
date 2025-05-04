@@ -152,9 +152,8 @@ function AdminPage() {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px', backgroundColor: '#003366', minHeight: '100vh', color: 'white' }}>
       <h1>Admin Console</h1>
-
       <h2>Museums</h2>
       <ul>
         {museums.map(museum => (
@@ -169,7 +168,7 @@ function AdminPage() {
         <div style={{ marginTop: '30px' }}>
           <h2>Manage Artworks for: {selectedMuseumName}</h2>
 
-          {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
+          {successMessage && <p style={{ color: 'lightgreen' }}>{successMessage}</p>}
 
           <div style={{ marginBottom: '20px' }}>
             <h3>Add Single Artwork</h3>
