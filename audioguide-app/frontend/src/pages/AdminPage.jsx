@@ -30,6 +30,7 @@ function AdminPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [darkMode, setDarkMode] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [showAddTools, setShowAddTools] = useState(false);
 
   const theme = {
     background: darkMode ? '#001f3f' : '#f0f0f0',
@@ -128,12 +129,12 @@ function AdminPage() {
       }
     });
     temp.sort((a, b) => {
-      if (a[sortField] < b[sortField]) return sortDirection === 'asc' ? -1 : 1;
-      if (a[sortField] > b[sortField]) return sortDirection === 'asc' ? 1 : -1;
+      if (a[sortField] < b[sortField]) return -1;
+      if (a[sortField] > b[sortField]) return 1;
       return 0;
     });
     setFilteredArtworks(temp);
-  }, [artworks, filterFields, sortField, sortDirection]);
+  }, [artworks, filterFields, sortField]);
 
   const handleAddArtwork = async () => {
     try {
@@ -237,16 +238,22 @@ function AdminPage() {
             <h3>{selectedMuseumName}</h3>
             <SuccessMessage message={successMessage} />
 
-            <ArtworkForm
-              newArtwork={newArtwork}
-              onChange={(key, value) => setNewArtwork({ ...newArtwork, [key]: value })}
-              onAdd={handleAddArtwork}
-              bulkArtworksText={bulkArtworksText}
-              setBulkArtworksText={setBulkArtworksText}
-              onBulkUpload={handleBulkUpload}
-              inputStyle={inputStyle}
-              buttonStyle={buttonStyle}
-            />
+            <button onClick={() => setShowAddTools(!showAddTools)} style={buttonStyle}>
+              {showAddTools ? 'Hide Add Tools' : 'Show Add Tools'}
+            </button>
+
+            {showAddTools && (
+              <ArtworkForm
+                newArtwork={newArtwork}
+                onChange={(key, value) => setNewArtwork({ ...newArtwork, [key]: value })}
+                onAdd={handleAddArtwork}
+                bulkArtworksText={bulkArtworksText}
+                setBulkArtworksText={setBulkArtworksText}
+                onBulkUpload={handleBulkUpload}
+                inputStyle={inputStyle}
+                buttonStyle={buttonStyle}
+              />
+            )}
 
             <div>
               <button onClick={handleDownload} style={buttonStyle}>Download JSON</button>
