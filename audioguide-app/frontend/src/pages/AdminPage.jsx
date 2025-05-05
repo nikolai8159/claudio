@@ -5,6 +5,14 @@ import ArtworkForm from '../components/ArtworkForm';
 import ArtworkTable from '../components/ArtworkTable';
 import ToggleSidebarButton from '../components/ToggleSidebarButton';
 import SuccessMessage from '../components/SuccessMessage';
+import {
+  getMuseums,
+  getArtworks,
+  addArtwork,
+  addBulkArtworks,
+  updateArtwork,
+  deleteArtwork
+} from '../services/api';
 
 function AdminPage() {
   const [museums, setMuseums] = useState([]);
@@ -86,12 +94,30 @@ function AdminPage() {
   };
 
   useEffect(() => {
-    fetchMuseums();
+    const loadMuseums = async () => {
+      try {
+        const data = await getMuseums();
+        setMuseums(data);
+      } catch (error) {
+        console.error(error);
+        alert('Failed to load museums');
+      }
+    };
+    loadMuseums();
   }, []);
 
   useEffect(() => {
     if (selectedMuseum) {
-      fetchArtworks(selectedMuseum);
+      const loadArtworks = async () => {
+        try {
+          const data = await getArtworks(selectedMuseum);
+          setArtworks(data);
+        } catch (error) {
+          console.error(error);
+          alert('Failed to load artworks');
+        }
+      };
+      loadArtworks();
     }
   }, [selectedMuseum]);
 
@@ -110,46 +136,32 @@ function AdminPage() {
     setFilteredArtworks(temp);
   }, [artworks, filterFields, sortField, sortDirection]);
 
-  const fetchMuseums = () => {
-    fetch('http://192.168.178.61:5000/api/museums')
-      .then(response => response.json())
-      .then(data => setMuseums(data));
-  };
-
-  const fetchArtworks = (museumId) => {
-    fetch(`http://192.168.178.61:5000/api/museums/${museumId}/artworks`)
-      .then(res => res.json())
-      .then(data => setArtworks(data));
-  };
-
-  const handleAddArtwork = () => {
-    fetch(`http://192.168.178.61:5000/api/museums/${selectedMuseum}/artworks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newArtwork)
-    }).then(() => {
+  const handleAddArtwork = async () => {
+    try {
+      await addArtwork(selectedMuseum, newArtwork);
       setNewArtwork({ title: '', artist: '', year: '', exhibition: '', text: '', audiofile: '' });
       setSuccessMessage('Artwork added!');
-      fetchArtworks(selectedMuseum);
+      const data = await getArtworks(selectedMuseum);
+      setArtworks(data);
       setTimeout(() => setSuccessMessage(''), 3000);
-    });
+    } catch (error) {
+      console.error(error);
+      alert('Failed to add artwork');
+    }
   };
 
-  const handleBulkUpload = () => {
+  const handleBulkUpload = async () => {
     try {
       const data = JSON.parse(bulkArtworksText);
-      fetch(`http://192.168.178.61:5000/api/museums/${selectedMuseum}/artworks/bulk`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      }).then(() => {
-        setBulkArtworksText('');
-        setSuccessMessage('Bulk upload successful!');
-        fetchArtworks(selectedMuseum);
-        setTimeout(() => setSuccessMessage(''), 3000);
-      });
-    } catch {
-      alert('Invalid JSON');
+      await addBulkArtworks(selectedMuseum, data);
+      setBulkArtworksText('');
+      setSuccessMessage('Bulk upload successful!');
+      const updated = await getArtworks(selectedMuseum);
+      setArtworks(updated);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error(error);
+      alert('Bulk upload failed. Check JSON format.');
     }
   };
 
@@ -166,12 +178,18 @@ function AdminPage() {
     setSelectedRows(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
-  const bulkDelete = () => {
-    selectedRows.forEach(id => {
-      fetch(`http://192.168.178.61:5000/api/artworks/${id}`, { method: 'DELETE' })
-        .then(() => fetchArtworks(selectedMuseum));
-    });
-    setSelectedRows([]);
+  const bulkDelete = async () => {
+    try {
+      for (const id of selectedRows) {
+        await deleteArtwork(id);
+      }
+      const updated = await getArtworks(selectedMuseum);
+      setArtworks(updated);
+      setSelectedRows([]);
+    } catch (error) {
+      console.error(error);
+      alert('Failed to delete one or more artworks');
+    }
   };
 
   const startEditing = (art) => {
@@ -183,15 +201,16 @@ function AdminPage() {
     setEditedArtwork({ ...editedArtwork, [field]: value });
   };
 
-  const saveEditedArtwork = () => {
-    fetch(`http://192.168.178.61:5000/api/artworks/${editingArtworkId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editedArtwork)
-    }).then(() => {
+  const saveEditedArtwork = async () => {
+    try {
+      await updateArtwork(editingArtworkId, editedArtwork);
+      const updated = await getArtworks(selectedMuseum);
+      setArtworks(updated);
       setEditingArtworkId(null);
-      fetchArtworks(selectedMuseum);
-    });
+    } catch (error) {
+      console.error(error);
+      alert('Failed to save changes');
+    }
   };
 
   return (
