@@ -25,7 +25,6 @@ function AdminPage() {
   const [editingArtworkId, setEditingArtworkId] = useState(null);
   const [editedArtwork, setEditedArtwork] = useState({});
   const [sortField, setSortField] = useState('id');
-  const [sortDirection, setSortDirection] = useState('asc');
   const [newArtwork, setNewArtwork] = useState({ title: '', artist: '', year: '', exhibition: '', text: '', audiofile: '' });
   const [bulkArtworksText, setBulkArtworksText] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
